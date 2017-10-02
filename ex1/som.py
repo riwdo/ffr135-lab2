@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from random import randint
 from pprint import pprint
 
 INPUT_SIZE = 1000
@@ -8,8 +9,7 @@ NEURON_SIZE = 100
 
 TAO_SIGMA = 300
 SIGMA_ZERO = 100
-
-T_ORDER = 1
+T_ORDER = 1000
 ETA_ZERO = .1
 
 
@@ -47,7 +47,7 @@ def calc_distance(point, neuron):
 
 
 def neighbor_func(winning_dist, other_dist, sigma):
-    return np.exp(np.square(-np.abs(other_dist - winning_dist)) / (2 * np.square(sigma)))
+    return np.exp((-np.abs(other_dist - winning_dist) ** 2 / 2 * (sigma ** 2)))
 
 
 def calc_delta_weight(sigma, learning_rate, distance):
@@ -64,36 +64,38 @@ def find_nearest_neuron(point_index, points, neurons_weights):
             nearest_neuron_index = i
             min_distance = dist
         distances.append(dist)
-        # print points[point_index], neurons_weights[i], calc_distance(points[point_index], neurons_weights[i])
-    # print 'Nearest neuron:', nearest_neuron_index, '- Distance:', min_distance
     return nearest_neuron_index, np.array(distances)
+
+
+def get_random_point_index(high):
+    return randint(0, high - 1)
 
 
 points = generate_points(INPUT_SIZE)
 np.random.shuffle(points)
 neurons_W = generate_neurons(NEURON_SIZE)
 
+plt.ion()
+plt.scatter(points[:, 0], points[:, 1], c='b')
+plt.scatter(neurons_W[:, 0], neurons_W[:, 1], c='g')
+plt.show()
+
 for i in range(T_ORDER):
-    sys.stdout.write("Epoch %d of %d\r" % (i, T_ORDER))
+    sys.stdout.write("Running epoch %d of %d...\r" % (i, T_ORDER))
     sys.stdout.flush()
+
     learning_rate = gaussian_width(ETA_ZERO, i, TAO_SIGMA)
     sigma_rate = gaussian_width(SIGMA_ZERO, i, TAO_SIGMA)
-    for j in range(INPUT_SIZE):
-        winning_index, distances = find_nearest_neuron(j, points, neurons_W)
-        for k in range(NEURON_SIZE):
-            print neurons_W[k]
-            neurons_W[k] += calc_delta_weight(learning_rate, neighbor_func(distances[winning_index], distances[k], sigma_rate), distances[k])
-            print neurons_W[k]
-        exit()
-    # print learning_rate, sigma_rate
 
-# exit()
-plt.ion()
-plt.scatter(points[:, 0], points[:, 1])
-plt.scatter(neurons_W[:, 0], neurons_W[:, 1])
+    random_point_index = get_random_point_index(INPUT_SIZE)
+    winning_neuron_index, distances = find_nearest_neuron(random_point_index, points, neurons_W)
+    for k in range(NEURON_SIZE):
+        neurons_W[k] += calc_delta_weight(learning_rate, neighbor_func(distances[winning_neuron_index], distances[k], sigma_rate), distances[k])
+    if i % 100 == 0:
+        plt.clf()   # Clears plot before rendering
+        plt.scatter(points[:, 0], points[:, 1], c='b')
+        plt.scatter(neurons_W[:, 0], neurons_W[:, 1], c='g')
+        plt.pause(1)
+
 pprint(neurons_W)
-# plt.scatter(points[0][0], points[0][1], c='r')
-# plt.scatter(neurons_W[test_i][0], neurons_W[test_i][1], c='g')
-plt.pause(2)
-plt.ioff()
-plt.show()
+plt.pause(10)
