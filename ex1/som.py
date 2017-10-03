@@ -46,25 +46,23 @@ def calc_distance(point, neuron):
     return np.linalg.norm(point - neuron)
 
 
-def neighbor_func(winning_dist, other_dist, sigma):
-    return np.exp((-np.abs(other_dist - winning_dist) ** 2 / 2 * (sigma ** 2)))
+def neighbor_func(winning_index, other_index, sigma):
+    return np.exp((-((other_index - winning_index) ** 2) / (2 * (sigma ** 2))))
 
 
-def calc_delta_weight(sigma, learning_rate, distance):
-    return sigma * learning_rate * distance
+def calc_delta_weight(learning_rate, neighbor, distance):
+    return learning_rate * neighbor * distance
 
 
 def find_nearest_neuron(point_index, points, neurons_weights):
     min_distance = 1000000.0
     nearest_neuron_index = 0
-    distances = []
     for i in range(0, len(neurons_weights)):
         dist = calc_distance(points[point_index], neurons_weights[i])
         if dist < min_distance:
             nearest_neuron_index = i
             min_distance = dist
-        distances.append(dist)
-    return nearest_neuron_index, np.array(distances)
+    return nearest_neuron_index
 
 
 def get_random_point_index(high):
@@ -88,14 +86,14 @@ for i in range(T_ORDER):
     sigma_rate = gaussian_width(SIGMA_ZERO, i, TAO_SIGMA)
 
     random_point_index = get_random_point_index(INPUT_SIZE)
-    winning_neuron_index, distances = find_nearest_neuron(random_point_index, points, neurons_W)
+    winning_neuron_index= find_nearest_neuron(random_point_index, points, neurons_W)
     for k in range(NEURON_SIZE):
-        neurons_W[k] += calc_delta_weight(learning_rate, neighbor_func(distances[winning_neuron_index], distances[k], sigma_rate), distances[k])
-    if i % 100 == 0:
-        plt.clf()   # Clears plot before rendering
+        neurons_W[k] += calc_delta_weight(learning_rate, neighbor_func(winning_neuron_index, k, sigma_rate), points[random_point_index] - neurons_W[k])
+
+    if i % 20 == 0:
+        plt.clf()  # Clears plot before rendering
         plt.scatter(points[:, 0], points[:, 1], c='b')
         plt.scatter(neurons_W[:, 0], neurons_W[:, 1], c='g')
-        plt.pause(1)
+        plt.pause(.2)
 
-pprint(neurons_W)
 plt.pause(10)
