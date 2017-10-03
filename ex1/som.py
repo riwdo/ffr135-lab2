@@ -7,7 +7,7 @@ INPUT_SIZE = 1000
 NEURON_SIZE = 100
 
 TAO_SIGMA = 300
-SIGMA_ORDER_ZERO = 100
+SIGMA_ORDER_ZERO = 5
 T_ORDER = 1000
 ETA_ORDER_ZERO = .1
 
@@ -15,7 +15,7 @@ T_CONV = 20000
 SIGMA_CONV = .9
 ETA_CONV = .01
 
-PLOT_POINTS = True
+PLOT_POINTS = False
 PLOT_ION = False
 
 
@@ -90,7 +90,7 @@ if PLOT_ION:
     plt.show()
 
 for i in range(T_ORDER):
-    sys.stdout.write("ORDER: Running epoch %d of %d...\r" % (i, T_ORDER))
+    sys.stdout.write("ORDER: Running epoch %d of %d...\r" % (i + 1, T_ORDER))
     sys.stdout.flush()
 
     learning_rate = gaussian_width(ETA_ORDER_ZERO, i, TAO_SIGMA)
@@ -119,7 +119,7 @@ plt.subplot(212)
 plt.title('Convergence Phase')
 
 for i in range(T_CONV):
-    sys.stdout.write("CONV: Running epoch %d of %d...\r" % (i, T_CONV))
+    sys.stdout.write("CONV: Running epoch %d of %d...\r" % (i + 1, T_CONV))
     sys.stdout.flush()
     random_point_index = get_random_point_index(INPUT_SIZE)
     winning_neuron_index = find_nearest_neuron(random_point_index, points, neurons_W)
