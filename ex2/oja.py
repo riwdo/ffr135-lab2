@@ -1,11 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy
 import sys
 from random import randint
 
 learning_rate = 0.001
-updates = 10**4
+#updates = 10**4
 
+updates = [0]
+for x in range(1, 20000):  # [1, 20, 40, 60, ..., 400]
+    updates.append(x)
 
 def generate_weights(n_points, n_neurons):
     return np.random.rand(n_points, n_neurons) * 2 - 1
@@ -25,19 +29,12 @@ def random_pattern_index(size):
 
 
 def network_output(input_pattern):
-    output = 0
-    for i in range(len(patterns[input_pattern])):
-        output += weights[i]*patterns[input_pattern]
-    return output
+    return np.sum(np.multiply(weights,patterns[input_pattern]))
 
 
-def update_weight(size):
-    index = random_pattern_index(size)
+def update_weight(index):
     output = network_output(index)
-    print output
-    print weights[index]
-    weights[index] += learning_rate * output * (patterns[index]-output*weights[index])
-    print weights[index]
+    return learning_rate * output * (patterns[index]-output*weights)
 
 
 f = open('data_ex2_task2_2017.txt','r')
@@ -45,14 +42,21 @@ data_lines = f.readlines()
 f.close()
 
 patterns = get_input_patterns(data_lines)
-weights = generate_weights(401,2)
-print weights[1]
-plt.scatter(patterns[:,0], patterns[:,1])
-plt.plot(weights[:,0], weights[:,1])
-for i in range(updates):
+weights = generate_weights(1,2)
+f, axarr = plt.subplots(2,sharex=False)
+axarr[0].scatter(patterns[:,0], patterns[:,1],color='purple',s=2)
+#axarr[0].scatter(weights[:,0], weights[:,1], color='blue',s=2)
+#plt.plot(weights[:,0], weights[:,1])
+weight_modulus = []
+for i in range(len(updates)):
     print i
-    update_weight(len(patterns))
-plt.plot(weights[:,0], weights[:,1])
+    index = random_pattern_index(len(patterns))
+    weights += update_weight(index)
+    weight_modulus.append(np.linalg.norm(weights))
+
+#print np.asarray(weight_modulus).size
+axarr[1].scatter(updates,np.asarray(weight_modulus),s=2)
+axarr[0].plot([0,weights[0,0]], [0,weights[0,1]], color='red')
 plt.show()
 
 
