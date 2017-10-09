@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 LEARNING_RATE = 0.001
-updates = [0]
-for x in range(1, 20000):
-    updates.append(x)
+updates = np.arange(0, 20000)
 
 
 def generate_weights(n_points, n_neurons):
@@ -39,6 +37,11 @@ def oja(input_data, weights):
     for i in range(len(updates)):
         index = random_pattern_index(len(input_data))
         weights += update_weight(input_data, index, weights)
+        # print np.mean(np.dot(input_data, input_data.T))
+        # print input_data.shape, input_data.T.shape
+        C = np.cov(np.dot(input_data, input_data.T))
+        print np.linalg.eig(C)[0]
+        exit()
         weight_modulus.append(np.linalg.norm(weights))
     return weights, weight_modulus
 
@@ -56,7 +59,7 @@ norm_W = generate_weights(1, 2)
 W, W_mod = oja(patterns, W)
 norm_W, norm_W_mod = oja(norm_patterns, norm_W)
 
-f, axarr = plt.subplots(2, 2, sharex=False)
+f, axarr = plt.subplots(2, 2)
 axarr[0, 0].set_title('Original Data')
 axarr[0, 0].scatter(patterns[:, 0], patterns[:, 1], color='purple', s=2)
 axarr[0, 0].plot([0, W[0, 0]], [0, W[0, 1]], color='red', linewidth=4)
