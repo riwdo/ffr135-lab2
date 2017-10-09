@@ -4,7 +4,7 @@ import sys
 
 N_NEURONS = 4
 LEARNING_RATE = 0.02
-N_UPDATES = 1000
+N_UPDATES = 100000
 
 
 def get_data(lines):
@@ -35,16 +35,16 @@ def calc_distance(point, neuron):
 def activation(pattern_index, weights):
     denominator = 0
     for i in range(0, len(weights)):
-        denominator += ((np.exp((-(calc_distance(patterns[pattern_index], weights[i]))**2))) / 2)
+        denominator += ((np.exp(((-1)*np.square(calc_distance(patterns[pattern_index], weights[i]))))) / 2)
 
     max_g = 0
-    winning_index = 0
+    w_i = 0
     for index in range(0, N_NEURONS):
-        g = ((np.exp((-(calc_distance(patterns[pattern_index], weights[index])) ** 2))) / 2) / denominator
+        g = ((np.exp(((-1)*np.square(calc_distance(patterns[pattern_index], weights[index]))))) / 2) / denominator
         if g >= max_g:
             max_g = g
-            winning_index = index
-    return max_g, winning_index
+            w_i = index
+    return max_g, w_i
 
 
 f = open('data_ex2_task3_2017.txt', 'r')
@@ -59,10 +59,12 @@ for i in range(0, N_UPDATES):
     rpi = random_pattern_index(len(patterns))
     g_i, winning_index = activation(random_pattern_index(len(patterns)), weights)
     weights[winning_index] += LEARNING_RATE * (patterns[rpi] - weights[winning_index])
-    g.append(g_i)
-    sys.stdout.write("ORDER: Running epoch %d of %d...\r" % (i + 1, N_UPDATES))
+    if i >= N_UPDATES - N_NEURONS:
+        g.append(g_i)
+    sys.stdout.write("Running epoch %d of %d...\r" % (i + 1, N_UPDATES))
     sys.stdout.flush()
-g = g[-N_NEURONS:]
+print ''
+print g
 print weights
 
 # HERE COMES THE SUPERVISED LEARNING
