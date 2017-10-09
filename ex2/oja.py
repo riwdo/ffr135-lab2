@@ -39,9 +39,9 @@ def oja(input_data, weights):
         weights += update_weight(input_data, index, weights)
         # print np.mean(np.dot(input_data, input_data.T))
         # print input_data.shape, input_data.T.shape
-        C = np.cov(np.dot(input_data, input_data.T))
-        print np.linalg.eig(C)[0]
-        exit()
+        # C = np.dot(input_data, input_data.T)
+        # print C
+        # exit()
         weight_modulus.append(np.linalg.norm(weights))
     return weights, weight_modulus
 
