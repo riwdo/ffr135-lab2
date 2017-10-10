@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import supervised_model as sm
 
 N_NEURONS = 4
 LEARNING_RATE = 0.02
 N_UPDATES = 100000
-
 
 def get_data(lines):
     temp = []
@@ -28,23 +28,16 @@ def random_pattern_index(size):
     return np.random.randint(0, size)
 
 
-def calc_distance(point, neuron):
-    return np.linalg.norm(point - neuron)
-
-
-def activation(pattern_index, weights):
+def activation(pattern_index, w):
     denominator = 0
-    for i in range(0, len(weights)):
-        denominator += ((np.exp(((-1)*np.square(calc_distance(patterns[pattern_index], weights[i]))))) / 2)
-
-    max_g = 0
-    w_i = 0
-    for index in range(0, N_NEURONS):
-        g = ((np.exp(((-1)*np.square(calc_distance(patterns[pattern_index], weights[index]))))) / 2) / denominator
-        if g >= max_g:
-            max_g = g
-            w_i = index
-    return max_g, w_i
+    x = patterns[pattern_index]
+    for i in range(0, N_NEURONS):
+        denominator += np.exp((-np.linalg.norm(x - w[i]) ** 2) / 2)
+    g_ = []
+    for i in range(0, N_NEURONS):
+        g = np.exp((-np.linalg.norm(x - w[i]) ** 2) / 2) / denominator
+        g_.append(g)
+    return np.array(g_, dtype=np.float_)
 
 
 f = open('data_ex2_task3_2017.txt', 'r')
@@ -52,25 +45,25 @@ data_lines = f.readlines()
 f.close()
 Y, patterns = get_data(data_lines)
 weights = generate_weights(N_NEURONS, 2)
-g = []
 
 print weights
-for i in range(0, N_UPDATES):
+for index in range(0, N_UPDATES):
     rpi = random_pattern_index(len(patterns))
-    g_i, winning_index = activation(random_pattern_index(len(patterns)), weights)
+    winning_index = np.argmax(activation(rpi, weights))
     weights[winning_index] += LEARNING_RATE * (patterns[rpi] - weights[winning_index])
-    if i >= N_UPDATES - N_NEURONS:
-        g.append(g_i)
-    sys.stdout.write("Running epoch %d of %d...\r" % (i + 1, N_UPDATES))
+    sys.stdout.write("Running epoch %d of %d...\r" % (index + 1, N_UPDATES))
     sys.stdout.flush()
 print ''
-print g
 print weights
+
+g_s = []
+for i in range(0, len(patterns)):
+    g_s.append(activation(i, weights))
 
 # HERE COMES THE SUPERVISED LEARNING
 
+sm.train(np.array(g_s), Y, N_NEURONS, 1)
 exit()
-
 arr_1 = []
 arr_2 = []
 for a in patterns:
