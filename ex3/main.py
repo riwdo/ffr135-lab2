@@ -1,11 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-import supervised_model as sm
+import supervised_model
 
 N_NEURONS = 4
 LEARNING_RATE = 0.02
 N_UPDATES = 100000
+EXPERIMENTS = 20
+PIXEL_PER_RANGE = 50
+
 
 def get_data(lines):
     temp = []
@@ -28,9 +31,8 @@ def random_pattern_index(size):
     return np.random.randint(0, size)
 
 
-def activation(pattern_index, w):
+def activation(x, w):
     denominator = 0
-    x = patterns[pattern_index]
     for i in range(0, N_NEURONS):
         denominator += np.exp((-np.linalg.norm(x - w[i]) ** 2) / 2)
     g_ = []
@@ -40,40 +42,95 @@ def activation(pattern_index, w):
     return np.array(g_, dtype=np.float_)
 
 
+def shuffle_data(X, Y):
+    if len(X) != len(Y):
+        raise IndexError('X and Y does need to have same length')
+    a = np.arange(0, len(X))
+    np.random.shuffle(a)
+
+    Y_rand, X_rand = [], []
+    for i in a:
+        X_rand.append(X[i])
+        Y_rand.append(Y[i])
+    return np.array(X_rand), np.array(Y_rand)
+
+
+def split_dataset(dataset, training_rate):
+    training_index = int(np.floor(len(dataset) * training_rate))
+    return dataset[:training_index], dataset[training_index:]
+
+
 f = open('data_ex2_task3_2017.txt', 'r')
 data_lines = f.readlines()
 f.close()
+best_error = 1
+best_w_super = None
+best_w_unsuper = None
+for experiment in range(0, EXPERIMENTS):
+    print 'Running experiment %d by %d\n' % (experiment + 1, EXPERIMENTS)
+    Y, patterns = get_data(data_lines)
+    weights = generate_weights(N_NEURONS, 2)
+
+    for index in range(0, N_UPDATES):
+        rpi = random_pattern_index(len(patterns))
+        winning_index = np.argmax(activation(patterns[rpi], weights))
+        weights[winning_index] += LEARNING_RATE * (patterns[rpi] - weights[winning_index])
+        sys.stdout.write("Running unsupervised training epoch %d of %d...\r" % (index + 1, N_UPDATES))
+        sys.stdout.flush()
+    print ''
+
+    g_s = []
+    for i in range(0, len(patterns)):
+        g_s.append(activation(patterns[i], weights))
+
+    # HERE COMES THE SUPERVISED LEARNING
+
+    X_new, Y_new = shuffle_data(g_s, Y)
+    X_train, X_test = split_dataset(X_new, 0.8)
+    Y_train, Y_test = split_dataset(Y_new, 0.8)
+
+    sm = supervised_model.SupervisedModel(N_NEURONS, 1)
+    sm.train(X_train, Y_train)
+    experiment_error = sm.valid(X_test, Y_test)
+    print '\n'
+    if experiment_error < best_error:
+        best_error = experiment_error
+        best_w_super = sm.w
+        best_w_unsuper = weights
+
+print best_error
+print 'Best super w', best_w_super
+print 'Best unsuper w', best_w_unsuper
+
 Y, patterns = get_data(data_lines)
-weights = generate_weights(N_NEURONS, 2)
-
-print weights
-for index in range(0, N_UPDATES):
-    rpi = random_pattern_index(len(patterns))
-    winning_index = np.argmax(activation(rpi, weights))
-    weights[winning_index] += LEARNING_RATE * (patterns[rpi] - weights[winning_index])
-    sys.stdout.write("Running epoch %d of %d...\r" % (index + 1, N_UPDATES))
-    sys.stdout.flush()
-print ''
-print weights
-
-g_s = []
+input_pos = []
+input_neg = []
 for i in range(0, len(patterns)):
-    g_s.append(activation(i, weights))
-
-# HERE COMES THE SUPERVISED LEARNING
-
-sm.train(np.array(g_s), Y, N_NEURONS, 1)
-exit()
-arr_1 = []
-arr_2 = []
-for a in patterns:
-    if a[0] == 1:
-        arr_1.append((a[1], a[2]))
+    if Y[i] == 1:
+        input_pos.append(patterns[i])
     else:
-        arr_2.append((a[1], a[2]))
-arr_1 = np.array(arr_1)
-arr_2 = np.array(arr_2)
+        input_neg.append(patterns[i])
+input_pos = np.array(input_pos)
+input_neg = np.array(input_neg)
 
-plt.scatter(arr_1[:, 0], arr_1[:, 1], c='r')
-plt.scatter(arr_2[:, 0], arr_2[:, 1], c='b')
+x_max, x_min = np.amax(patterns[:, 0]), np.amin(patterns[:, 0])
+y_max, y_min = np.amax(patterns[:, 1]), np.amin(patterns[:, 1])
+
+test_X = np.linspace(x_min, x_max, PIXEL_PER_RANGE)
+test_Y = np.linspace(y_min, y_max, PIXEL_PER_RANGE)
+plot_matrix = np.empty([PIXEL_PER_RANGE, PIXEL_PER_RANGE])
+
+best_sm = supervised_model.SupervisedModel(N_NEURONS, 1, best_w_super)
+color_map = plt.get_cmap('binary')
+
+for i in range(0, PIXEL_PER_RANGE):
+    for j in range(0, PIXEL_PER_RANGE):
+        uns = activation(np.array([test_X[i], test_Y[j]]), best_w_unsuper)
+        guess = best_sm.get_guess(uns)
+        plt.scatter(test_X[i], test_Y[j], color=color_map((guess+1) / 2), s=200)
+
+plt.scatter(input_pos[:, 0], input_pos[:, 1], c='g')
+plt.scatter(input_neg[:, 0], input_neg[:, 1], c='y')
+
+plt.axis([x_min, x_max, y_min, y_max])
 plt.show()
