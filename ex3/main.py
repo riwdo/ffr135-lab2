@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import supervised_model
 
-N_NEURONS = 4
+N_NEURONS = 9
 LEARNING_RATE = 0.02
 N_UPDATES = 100000
 EXPERIMENTS = 20
@@ -75,8 +75,8 @@ for experiment in range(0, EXPERIMENTS):
         rpi = random_pattern_index(len(patterns))
         winning_index = np.argmax(activation(patterns[rpi], weights))
         weights[winning_index] += LEARNING_RATE * (patterns[rpi] - weights[winning_index])
-        sys.stdout.write("Running unsupervised training epoch %d of %d...\r" % (index + 1, N_UPDATES))
-        sys.stdout.flush()
+        # sys.stdout.write("Running unsupervised training epoch %d of %d...\r" % (index + 1, N_UPDATES))
+        # sys.stdout.flush()
     print ''
 
     g_s = []
