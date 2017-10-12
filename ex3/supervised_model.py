@@ -1,15 +1,10 @@
 import numpy as np
 import sys
-import json
 
 # Hyper parameters
 learning_rate = .1
 beta = .5
 iterations = 3000
-
-storage_training = []
-storage_validation = []
-storage_classification = []
 
 
 def activation(x, deriv=False):
@@ -44,15 +39,7 @@ class SupervisedModel:
         t = float(1) / (2 * p)
         return t * np.sum(err)
 
-    def energy_fn(self, x, y):
-        y_val = activation(np.dot(x, self.w))
-        err = y - y_val
-        energy = np.sum(np.square(err) / 2)
-        return energy
-
     def train(self, X, Y):
-        s_train = []
-
         # Initialize bias with mean 0 in interval [-1, 1]
         bias_interval = [-1, 1]
         b = (bias_interval[1] - bias_interval[0]) * np.random.random((1, self.m)) + bias_interval[0]
@@ -89,18 +76,3 @@ class SupervisedModel:
 
     def get_guess(self, x):
         return activation(np.dot(x, self.w))[0]
-
-    # for experiment in range(10):
-    #
-    #     storage_classification.append([classification_error(X, Y, w)])
-#
-# with open(OUTFILE_TRAINING, 'w+') as f:
-#     f.write(json.dumps(storage_training))
-#
-# with open(OUTFILE_VALIDATION, 'w+') as f:
-#     f.write(json.dumps(storage_validation))
-#
-# with open(OUTFILE_CLASSFICATION_ERROR, 'w+') as f:
-#     f.write(json.dumps(storage_classification))
-
-

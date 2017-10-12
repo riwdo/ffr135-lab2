@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import supervised_model
 
-N_NEURONS = 9
+N_NEURONS = 1
 LEARNING_RATE = 0.02
 N_UPDATES = 100000
 EXPERIMENTS = 20
@@ -55,53 +55,52 @@ def shuffle_data(X, Y):
     return np.array(X_rand), np.array(Y_rand)
 
 
-def split_dataset(dataset, training_rate):
-    training_index = int(np.floor(len(dataset) * training_rate))
-    return dataset[:training_index], dataset[training_index:]
-
-
 f = open('data_ex2_task3_2017.txt', 'r')
 data_lines = f.readlines()
 f.close()
+
 best_error = 1
-best_w_super = None
-best_w_unsuper = None
+best_weight_supervised = None
+best_weight_unsupervised = None
+
 for experiment in range(0, EXPERIMENTS):
     print 'Running experiment %d by %d\n' % (experiment + 1, EXPERIMENTS)
     Y, patterns = get_data(data_lines)
+
+    # Unsupervised simple competitive learning
     weights = generate_weights(N_NEURONS, 2)
 
     for index in range(0, N_UPDATES):
         rpi = random_pattern_index(len(patterns))
         winning_index = np.argmax(activation(patterns[rpi], weights))
         weights[winning_index] += LEARNING_RATE * (patterns[rpi] - weights[winning_index])
-        # sys.stdout.write("Running unsupervised training epoch %d of %d...\r" % (index + 1, N_UPDATES))
-        # sys.stdout.flush()
+        sys.stdout.write("Running unsupervised training epoch %d of %d...\r" % (index + 1, N_UPDATES))
+        sys.stdout.flush()
     print ''
 
     g_s = []
     for i in range(0, len(patterns)):
         g_s.append(activation(patterns[i], weights))
 
-    # HERE COMES THE SUPERVISED LEARNING
-
     X_new, Y_new = shuffle_data(g_s, Y)
-    X_train, X_test = split_dataset(X_new, 0.8)
-    Y_train, Y_test = split_dataset(Y_new, 0.8)
 
+    # Supervised simple perceptron network
     sm = supervised_model.SupervisedModel(N_NEURONS, 1)
-    sm.train(X_train, Y_train)
-    experiment_error = sm.valid(X_test, Y_test)
+    sm.train(X_new, Y_new)
+    experiment_error = sm.valid(X_new, Y_new)
     print '\n'
+
     if experiment_error < best_error:
+        # Store best experiment and it's result
         best_error = experiment_error
-        best_w_super = sm.w
-        best_w_unsuper = weights
+        best_weight_supervised = sm.w
+        best_weight_unsupervised = weights
 
-print best_error
-print 'Best super w', best_w_super
-print 'Best unsuper w', best_w_unsuper
+print 'Best avg classification error:', best_error
+print 'Best supervised weights:', best_weight_supervised
+print 'Best unsupervised weights:', best_weight_unsupervised
 
+# Plotting
 Y, patterns = get_data(data_lines)
 input_pos = []
 input_neg = []
@@ -120,12 +119,12 @@ test_X = np.linspace(x_min, x_max, PIXEL_PER_RANGE)
 test_Y = np.linspace(y_min, y_max, PIXEL_PER_RANGE)
 plot_matrix = np.empty([PIXEL_PER_RANGE, PIXEL_PER_RANGE])
 
-best_sm = supervised_model.SupervisedModel(N_NEURONS, 1, best_w_super)
+best_sm = supervised_model.SupervisedModel(N_NEURONS, 1, best_weight_supervised)
 color_map = plt.get_cmap('binary')
 
 for i in range(0, PIXEL_PER_RANGE):
     for j in range(0, PIXEL_PER_RANGE):
-        uns = activation(np.array([test_X[i], test_Y[j]]), best_w_unsuper)
+        uns = activation(np.array([test_X[i], test_Y[j]]), best_weight_unsupervised)
         guess = best_sm.get_guess(uns)
         plt.scatter(test_X[i], test_Y[j], color=color_map((guess+1) / 2), s=200)
 
