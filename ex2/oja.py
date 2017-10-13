@@ -37,11 +37,6 @@ def oja(input_data, weights):
     for i in range(len(updates)):
         index = random_pattern_index(len(input_data))
         weights += update_weight(input_data, index, weights)
-        # print np.mean(np.dot(input_data, input_data.T))
-        # print input_data.shape, input_data.T.shape
-        # C = np.dot(input_data, input_data.T)
-        # print C
-        # exit()
         weight_modulus.append(np.linalg.norm(weights))
     return weights, weight_modulus
 
